@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.python-version
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Databricks / DAB
+.databricks/
+.bundle/
+source.zip
+*.pyc
+
+# Env / secrets
+.env
+*.env
+!.env.example
+
+# Local generated data (keep structure but not content)
+resources/data/raw/*
+!resources/data/raw/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store

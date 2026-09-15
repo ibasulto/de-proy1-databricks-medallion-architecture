@@ -1,0 +1,28 @@
+[project]
+name = "de-proy1-databricks-medallion"
+version = "0.1.0"
+description = "Portfolio project: retail medallion architecture on Databricks (bronze/silver/gold, delta, pyspark, CI/CD)."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"notebooks/*.py" = ["E402", "I001", "F821"]
+"tests/*.py" = ["E501"]
