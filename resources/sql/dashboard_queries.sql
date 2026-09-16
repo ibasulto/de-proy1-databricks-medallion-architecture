@@ -79,14 +79,16 @@ ORDER BY bud.commerce_period, gap;
 
 -- 06 · SSS por periodo (var. % vs la misma semana anio anterior)
 SELECT
-    fact.commerce_period,
-    fact.commerce_week,
+    cal.commerce_period,
+    cal.commerce_week,
     round(sum(fact.net_sales), 2)         AS net_sales,
     round(sum(fact.net_sales_sss), 2)     AS net_sales_sss,
     round((sum(fact.net_sales) - sum(fact.net_sales_sss)) / sum(fact.net_sales_sss) * 100, 2) AS sss_var_pct
 FROM ${catalog}.gold.fact_sales_store_daily AS fact
-GROUP BY fact.commerce_period, fact.commerce_week
-ORDER BY fact.commerce_period, fact.commerce_week;
+JOIN ${catalog}.gold.dim_calendar_445 AS cal
+    ON fact.date_key = cal.date_key
+GROUP BY cal.commerce_period, cal.commerce_week
+ORDER BY cal.commerce_period, cal.commerce_week;
 
 -- 07 · Trafico, tickets y canasta (comercio / store)
 SELECT
