@@ -13,23 +13,24 @@ def run_bronze(spark, cfg, use_autoloader: bool = False) -> list[str]:
     from bronze import ingest
 
     sources = [
-        ("stores_master", "stores/master", "csv", True),  # full refresh (full files) -> snapshot
-        ("products_master", "products/master", "csv", True),
-        ("calendar_445", "calendar/calendar_445", "csv", True),
-        ("sales_daily_store_sku", "sales/daily_store_sku", "csv", False),  # daily files -> append
-        ("pos_line_items", "pos_line_items", "csv", False),
-        ("store_daily_kpi", "kpi/store_daily", "csv", False),
-        ("daily_inventory", "inventory/daily", "csv", False),
-        ("budget", "budget/store_month", "csv", True),
+        ("stores_master", "stores/master.csv.gz", "csv", True, False),  # full refresh (file) -> snapshot
+        ("products_master", "products/master.csv.gz", "csv", True, False),
+        ("calendar_445", "calendar/calendar_445.csv.gz", "csv", True, False),
+        ("sales_daily_store_sku", "sales/daily_store_sku", "csv", False, True),  # daily files -> append
+        ("pos_line_items", "pos_line_items", "csv", False, True),
+        ("store_daily_kpi", "kpi/store_daily", "csv", False, True),
+        ("daily_inventory", "inventory/daily", "csv", False, True),
+        ("budget", "budget/store_month/store_month_budget.csv.gz", "csv", True, False),
     ]
     loaded = []
-    for table, source_dir, fmt, snapshot in sources:
+    for table, source_dir, fmt, snapshot, is_dir in sources:
         mode = "overwrite" if snapshot else "append"
+        extra_files = "*" if is_dir else None
         if use_autoloader:
             cp = f"{cfg.dq_report_root()}/checkpoints"
             ingest.auto_loader_bronze(spark, cfg, table, source_dir, cp)
         else:
-            ingest.load_bronze(spark, cfg, table, source_dir, fmt=fmt, mode=mode)
+            ingest.load_bronze(spark, cfg, table, source_dir, fmt=fmt, mode=mode, extra_files=extra_files)
         loaded.append(f"{cfg.bronze(table)} <- {source_dir}")
     return loaded
 

@@ -25,8 +25,10 @@ def _raw_root(cfg, spark) -> str:
     return f"dbfs:/FileStore/medallion/{cfg.raw_path}"
 
 
-def raw_source_path(cfg, spark, source_dir: str, extra_files: str = "*") -> str:
+def raw_source_path(cfg, spark, source_dir: str, extra_files: str | None = "*") -> str:
     root = _raw_root(cfg, spark)
+    if extra_files is None:
+        return f"{root}/{source_dir}"
     return f"{root}/{source_dir}/{extra_files}"
 
 
@@ -46,7 +48,13 @@ def save_tracking(df, load_id: str):
 
 
 def load_bronze(
-    spark, cfg, table: str, source_dir: str, fmt: str = "csv", mode: str = "overwrite"
+    spark,
+    cfg,
+    table: str,
+    source_dir: str,
+    fmt: str = "csv",
+    mode: str = "overwrite",
+    extra_files: str | None = "*",
 ) -> None:
     """Read every raw file under ``source_dir`` into ``<catalog>.bronze.brz_<table>``.
 
@@ -55,7 +63,7 @@ def load_bronze(
     from pyspark.sql import functions as F
 
     fq = cfg.bronze(bronze_table_name(table))
-    path = raw_source_path(cfg, spark, source_dir)
+    path = raw_source_path(cfg, spark, source_dir, extra_files=extra_files)
 
     reader = spark.read.format(fmt).option("header", "true").option("multiLine", "true")
     if fmt == "csv":

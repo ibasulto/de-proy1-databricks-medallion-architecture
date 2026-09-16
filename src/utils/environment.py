@@ -18,13 +18,17 @@ def ensure_environment(spark, cfg) -> list[str]:
         for schema in schemas:
             spark.sql(f"CREATE SCHEMA IF NOT EXISTS {cfg.catalog}.{schema}")
             created.append(f"{cfg.catalog}.{schema}")
-        spark.sql(
-            f"""
-            CREATE VOLUME IF NOT EXISTS {cfg.catalog}.{cfg.volume}
-            COMMENT 'Raw landing zone + DQ evidence for the retail medallion'
-            """
-        )
-        created.append(f"{cfg.catalog}.{cfg.volume}")
+        # Volume landing zone: catalog.<volume-schema> is the volume schema;
+        # raw_landing + dq_reports are the actual Volumes inside it.
+        spark.sql(f"CREATE SCHEMA IF NOT EXISTS {cfg.catalog}.{cfg.volume}")
+        for vol in (cfg.raw_path, "dq_reports"):
+            spark.sql(
+                f"""
+                CREATE VOLUME IF NOT EXISTS {cfg.catalog}.{cfg.volume}.{vol}
+                COMMENT 'Retail medallion {vol} volume'
+                """
+            )
+            created.append(f"{cfg.catalog}.{cfg.volume}.{vol}")
     else:
         for schema in schemas:
             spark.sql(f"CREATE SCHEMA IF NOT EXISTS {schema}")

@@ -10,29 +10,6 @@
 import sys
 from pathlib import Path
 
-SPARK_CONF_KEYS = {
-    "catalog": "spark.dab.catalog",
-    "bronze_schema": "spark.dab.bronze_schema",
-    "silver_schema": "spark.dab.silver_schema",
-    "gold_schema": "spark.dab.gold_schema",
-    "volume": "spark.dab.volume",
-    "data_location": "spark.dab.data_location",
-}
-
-DEFAULTS = {
-    "catalog": "retail_lakehouse",
-    "bronze_schema": "bronze",
-    "silver_schema": "silver",
-    "gold_schema": "gold",
-    "volume": "retail_volumes",
-    "data_location": "volume",
-}
-
-for key, conf in SPARK_CONF_KEYS.items():
-    value = spark.conf.get(conf, None)
-    if value:
-        DEFAULTS[key] = value
-
 # Resolve the repo root (bundle injects the absolute path as whitespace-safe text).
 repo_path = (
     dbutils.widgets.get("repo_path")
@@ -44,10 +21,10 @@ if src not in sys.path:
 
 # COMMAND ----------
 
-from utils.config import Cfg
+from utils.config import load
 from utils.environment import ensure_environment
 
-cfg = Cfg(**DEFAULTS)
+cfg = load()
 print(
     "Target:",
     cfg.catalog,

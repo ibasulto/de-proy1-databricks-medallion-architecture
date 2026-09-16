@@ -25,6 +25,7 @@ _DEFAULTS = {
     "run_date": None,
     "repo_path": None,
     "dq_threshold": "0.05",
+    "uc": "false",
 }
 
 _ENV_MAP = {
