@@ -37,13 +37,7 @@ def read_raw(spark, source: str, fmt: str, extra_options: dict | None = None) ->
     if extra_options:
         opts.update(extra_options)
     df = spark.read.options(**opts).format(fmt).load(source)
-    return df.withColumn("_source_file", _fn_input_file_name())
-
-
-def _fn_input_file_name():
-    from pyspark.sql import functions as F
-
-    return F.input_file_name()
+    return df
 
 
 def with_tracking(df, load_id: str, source: str) -> DataFrame:
@@ -94,7 +88,7 @@ def maintain(spark, table: str, zorder_cols: Sequence[str] | None = None) -> Non
 
 
 def table_exists(spark, fq_table: str) -> bool:
-    return spark._jsparkSession.catalog().tableExists(fq_table)
+    return bool(spark.catalog.tableExists(fq_table))
 
 
 def create_schema(spark, catalog: str, schema: str) -> None:

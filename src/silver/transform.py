@@ -383,7 +383,7 @@ def run_silver(spark, cfg) -> list[dict]:
     all_reports = []
     for spec in define_silver(spark, cfg):
         brz = spec["bronze"]
-        if not spark._jsparkSession.catalog().tableExists(cfg.name(cfg.bronze_schema, brz)):
+        if not spark.catalog.tableExists(cfg.name(cfg.bronze_schema, brz)):
             continue
         df = spark.table(cfg.name(cfg.bronze_schema, brz))
         cleaned = spec["clean"](df)
