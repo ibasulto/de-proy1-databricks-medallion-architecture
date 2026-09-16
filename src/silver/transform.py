@@ -289,7 +289,7 @@ def define_silver(spark, cfg) -> list[dict]:
         ).expect_column_values_to_be_between(
             "on_hand_qty", 0, None
         ).expect_column_distinct_values_to_contain_set(
-            "stock_state", {"IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK", "UNKNOWN"}
+            "stock_state", {"IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"}
         ).expect_row_count_to_be_between(1)
 
     def dq_budget(e: DataFrameExpectations) -> None:
