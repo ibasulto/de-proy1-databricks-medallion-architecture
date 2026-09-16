@@ -187,12 +187,12 @@ def _with_key(df, key_cols):
 def merge_into(spark, df: DataFrame, fq: str, key_cols: list[str]) -> None:
     """SCD1 upsert: update changed rows, insert new ones."""
     fq = _normalize(fq)
+    df = _with_key(df, key_cols)
     if not spark.catalog.tableExists(fq):
         df.write.mode("overwrite").format("delta").saveAsTable(fq)
         return
 
     src = "updates"
-    df = _with_key(df, key_cols)
     df.createOrReplaceTempView(src)
     keys_sql = " AND ".join(f"t.{k} <=> {src}.{k}" for k in key_cols)
     spark.sql(
