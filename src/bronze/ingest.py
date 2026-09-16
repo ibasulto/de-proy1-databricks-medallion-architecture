@@ -32,6 +32,18 @@ def raw_source_path(cfg, spark, source_dir: str, extra_files: str | None = "*") 
     return f"{root}/{source_dir}/{extra_files}"
 
 
+def _source_file_col(df):
+    """Return the source file path column (UC serverless exposes ``_metadata.file_path``)."""
+    from pyspark.sql import functions as F
+
+    try:
+        if "_metadata" in {c.name for c in df.schema.fields}:
+            return F.col("_metadata.file_path")
+    except Exception:
+        pass
+    return F.input_file_name()
+
+
 def save_tracking(df, load_id: str):
     """Add lineage columns; original columns are never dropped."""
     from pyspark.sql import functions as F
@@ -42,7 +54,7 @@ def save_tracking(df, load_id: str):
         .withColumn("_load_id", F.lit(load_id))
         .withColumn(
             "_source_file",
-            F.coalesce(F.col("_source_file"), F.input_file_name()),
+            F.coalesce(F.col("_source_file"), _source_file_col(df)),
         )
     )
 
@@ -60,7 +72,6 @@ def load_bronze(
 
     ``mode='overwrite'`` makes the job idempotent (snapshot semantic).
     """
-    from pyspark.sql import functions as F
 
     fq = cfg.bronze(bronze_table_name(table))
     path = raw_source_path(cfg, spark, source_dir, extra_files=extra_files)
@@ -68,7 +79,8 @@ def load_bronze(
     reader = spark.read.format(fmt).option("header", "true").option("multiLine", "true")
     if fmt == "csv":
         reader = reader.option("inferSchema", "true")
-    df = reader.load(path).withColumn("_source_file", F.input_file_name())
+    df = reader.load(path)
+    df = df.withColumn("_source_file", _source_file_col(df))
 
     df = save_tracking(df, load_id=f"bronze:{table}:{dt.datetime.utcnow():%Y%m%d%H%M%S}")
     if mode == "overwrite":
@@ -88,6 +100,7 @@ def auto_loader_bronze(spark, cfg, table: str, source_dir: str, checkpoint_dir: 
     fq = cfg.bronze(bronze_table_name(table))
     path = raw_source_path(cfg, spark, source_dir)
     cp = f"{checkpoint_dir}/{table}"
+    src_col = _source_file_col(spark.read.format("csv").load(path).limit(1))
     (
         spark.readStream.format("cloudFiles")
         .option("cloudFiles.format", "csv")
@@ -97,7 +110,7 @@ def auto_loader_bronze(spark, cfg, table: str, source_dir: str, checkpoint_dir: 
         .load(path)
         .withColumn("_ingestion_ts", F.current_timestamp())
         .withColumn("_load_id", F.lit(f"autoloader:{table}"))
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", src_col)
         .writeStream.option("checkpointLocation", cp)
         .trigger(availableNow=True)
         .toTable(fq)
