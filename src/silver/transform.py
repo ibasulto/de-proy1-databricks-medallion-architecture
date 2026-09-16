@@ -395,7 +395,7 @@ def run_silver(spark, cfg) -> list[dict]:
         merge_into(spark, cleaned, fq, spec["keys"])
         report = _apply_dq(
             spark, cleaned, fq, spec["silver"], spec["dq"], dq_threshold=cfg.dq_threshold
-        ).collect()
+        )
         all_reports.extend(report)
     report_path = f"{cfg.dq_report_root()}/silver"
     write_report(spark, all_reports, report_path, "Silver data quality")
