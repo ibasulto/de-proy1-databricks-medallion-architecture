@@ -428,6 +428,6 @@ def run_cuadraturas(spark, cfg) -> list[dict]:
         },
     ]
     results = assert_balances(checks)
-    report_path = f"/Volumes/{cfg.catalog}/{cfg.volume}/dq_reports/gold"
+    report_path = f"{cfg.dq_report_root()}/gold"
     write_report(spark, results, report_path, "Gold cuadratura")
     return results

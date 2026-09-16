@@ -38,6 +38,17 @@ _ENV_MAP = {
     "env": "DAB_ENV",
     "run_date": "DAB_RUN_DATE",
     "repo_path": "DAB_REPO_PATH",
+    "uc": "DAB_UC",
+}
+
+_SPARK_CONF_KEYS = {
+    "catalog": "spark.dab.catalog",
+    "bronze_schema": "spark.dab.bronze_schema",
+    "silver_schema": "spark.dab.silver_schema",
+    "gold_schema": "spark.dab.gold_schema",
+    "volume": "spark.dab.volume",
+    "data_location": "spark.dab.data_location",
+    "uc": "spark.dab.uc",
 }
 
 
@@ -107,6 +118,33 @@ def _read_widgets() -> dict:
     return out
 
 
+def _read_spark_conf(mapping: dict | None = None) -> dict:
+    """Read ``spark.dab.*`` conf from the session, mirroring notebook 00_setup."""
+    mapping = mapping or _SPARK_CONF_KEYS
+    spark = globals().get("spark")
+    if spark is None:
+        try:
+            from IPython import get_ipython
+
+            shell = get_ipython()
+            if shell is not None:
+                spark = shell.user_ns.get("spark")
+        except Exception:
+            return {}
+    if spark is None:
+        return {}
+
+    out: dict[str, str | None] = {}
+    for key, conf in mapping.items():
+        try:
+            value = spark.conf.get(conf, None)
+        except Exception:
+            continue
+        if value:
+            out[key] = value
+    return out
+
+
 def load(catalog: str | None = None, **overrides) -> Cfg:
     """Build a Cfg. Priority: kwargs > Databricks widgets > env vars > defaults."""
     values: dict[str, str | None] = {**dict(_DEFAULTS)}  # defaults
@@ -114,6 +152,10 @@ def load(catalog: str | None = None, **overrides) -> Cfg:
     for key, var in _ENV_MAP.items():  # env vars
         if os.environ.get(var):
             values[key] = os.environ[var]
+
+    for key, val in _read_spark_conf().items():  # Spark session conf (DAB job)
+        if val:
+            values[key] = val
 
     for key, val in _read_widgets().items():  # Databricks widgets
         if val:

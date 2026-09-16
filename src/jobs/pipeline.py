@@ -26,7 +26,7 @@ def run_bronze(spark, cfg, use_autoloader: bool = False) -> list[str]:
     for table, source_dir, fmt, snapshot in sources:
         mode = "overwrite" if snapshot else "append"
         if use_autoloader:
-            cp = f"/Volumes/{cfg.catalog}/{cfg.volume}/checkpoints"
+            cp = f"{cfg.dq_report_root()}/checkpoints"
             ingest.auto_loader_bronze(spark, cfg, table, source_dir, cp)
         else:
             ingest.load_bronze(spark, cfg, table, source_dir, fmt=fmt, mode=mode)
@@ -63,7 +63,7 @@ def run_quality(spark, cfg) -> dict:
 
     checks = list(silver_results) + reconciliations
     verdict = all(r.get("passed", False) for r in checks)
-    path = f"/Volumes/{cfg.catalog}/{cfg.volume}/dq_reports/overall"
+    path = f"{cfg.dq_report_root()}/overall"
     write_report(spark, checks, path, "Overall data quality")
     return {
         "passed": verdict,

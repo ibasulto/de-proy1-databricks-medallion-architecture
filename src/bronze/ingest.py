@@ -7,16 +7,22 @@ preserving the original payload (no business logic here).
 from __future__ import annotations
 
 import datetime as dt
-from pathlib import Path
 
 from utils import naming
 
 
 def _raw_root(cfg, spark) -> str:
-    """Return the directory (Volume path) that mirrors resources/data/raw."""
+    """Return the directory that mirrors resources/data/raw.
+
+    - ``volume`` (UC/Premium): /Volumes/<catalog>/<volume>/<raw_path>
+    - ``workspace`` (Community Edition): DBFS/FileStore landing zone, or an
+      explicit absolute path if ``raw_path`` starts with dbfs:/ file:/ or /.
+    """
     if cfg.data_location == "volume":
         return f"/Volumes/{cfg.catalog}/{cfg.volume}/{cfg.raw_path}"
-    return f"file://{Path('resources/data/raw').resolve().as_posix()}"
+    if cfg.raw_path.startswith(("dbfs:", "file:", "/")):
+        return cfg.raw_path
+    return f"dbfs:/FileStore/medallion/{cfg.raw_path}"
 
 
 def raw_source_path(cfg, spark, source_dir: str, extra_files: str = "*") -> str:

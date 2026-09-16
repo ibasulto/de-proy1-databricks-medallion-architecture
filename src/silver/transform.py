@@ -391,6 +391,6 @@ def run_silver(spark, cfg) -> list[dict]:
         merge_into(spark, cleaned, fq, spec["keys"])
         report = _apply_dq(spark, cleaned, fq, spec["silver"], spec["dq"]).collect()
         all_reports.extend(report)
-    report_path = f"/Volumes/{cfg.catalog}/{cfg.volume}/dq_reports/silver"
+    report_path = f"{cfg.dq_report_root()}/silver"
     write_report(spark, all_reports, report_path, "Silver data quality")
     return all_reports

@@ -1,4 +1,4 @@
-# Databricks Asset Bundle for the retail medallion pipeline.
+﻿# Databricks Asset Bundle for the retail medallion pipeline.
 # Targets: dev (default) and prod. Notebooks run as GIT tasks (Repo-aware).
 # CLI: databricks bundle deploy [--target dev] && databricks bundle run jb_medallion
 
@@ -21,22 +21,20 @@ variables:
   volume:
     default: retail_volumes
   data_location:
-    description: Where raw files land (volume | workspace)
-    default: volume
+    description: Where raw files land (volume=UC Premium | workspace=Community Edition)
+    default: workspace
+  uc:
+    description: Enable Unity Catalog (true=Premium | false=Community Edition)
+    default: "false"
   repo_path:
     description: Absolute path of the repo checkout in Databricks Repos
-    default: /Repos/ibasulto@.dev/de-proy1-databricks-medallion-architecture
+    default: /Repos/ignacio.basulto@gmail.com/de-proy1-databricks-medallion-architecture
   as_of:
     description: Optional gold as-of date (YYYY-MM-DD); empty = full range
     default: ""
 
 workspace:
-  root_path: /Shared/bundles/${bundle.name}/${bundle.target}-${workspace.current_user.id}
-
-artifacts:
-  src_zip:
-    type: archive
-    path: src
+  root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
 
 resources:
   jobs:
@@ -51,10 +49,14 @@ resources:
           new_cluster:
             spark_version: 15.4.x-scala2.12
             node_type_id: i3.xlarge
-            num_workers: 2
+            num_workers: 0
+            custom_tags:
+              ResourceClass: SingleNode
             spark_conf:
               spark.databricks.delta.preview.enabled: "true"
               spark.databricks.adaptive.autoOptimizeShuffle.enabled: "true"
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*]
               spark.dq.threshold: 0.05
               spark.dab.catalog: ${var.catalog}
               spark.dab.bronze_schema: ${var.bronze_schema}
@@ -62,16 +64,17 @@ resources:
               spark.dab.gold_schema: ${var.gold_schema}
               spark.dab.volume: ${var.volume}
               spark.dab.data_location: ${var.data_location}
+              spark.dab.uc: ${var.uc}
       tasks:
         - task_key: setup_environment
           notebook_task:
-            notebook_path: notebooks/00_setup
+            notebook_path: notebooks/00_setup.py
             base_parameters:
               repo_path: ${var.repo_path}
           job_cluster_key: shared
         - task_key: bronze_ingestion
           notebook_task:
-            notebook_path: notebooks/01_bronze_ingest
+            notebook_path: notebooks/01_bronze_ingest.py
             base_parameters:
               repo_path: ${var.repo_path}
               use_autoloader: "false"
@@ -80,7 +83,7 @@ resources:
             - task_key: setup_environment
         - task_key: silver_transform
           notebook_task:
-            notebook_path: notebooks/02_silver_transform
+            notebook_path: notebooks/02_silver_transform.py
             base_parameters:
               repo_path: ${var.repo_path}
           job_cluster_key: shared
@@ -88,7 +91,7 @@ resources:
             - task_key: bronze_ingestion
         - task_key: gold_build
           notebook_task:
-            notebook_path: notebooks/03_gold_build
+            notebook_path: notebooks/03_gold_build.py
             base_parameters:
               repo_path: ${var.repo_path}
               as_of: ${var.as_of}
@@ -97,7 +100,7 @@ resources:
             - task_key: silver_transform
         - task_key: quality_gate
           notebook_task:
-            notebook_path: notebooks/04_quality_checks
+            notebook_path: notebooks/04_quality_checks.py
             base_parameters:
               repo_path: ${var.repo_path}
           job_cluster_key: shared
@@ -110,7 +113,11 @@ targets:
     default: true
     variables:
       env: dev
+      data_location: workspace
+      uc: "false"
   prod:
     mode: production
     variables:
       env: prod
+      data_location: volume
+      uc: "true"
