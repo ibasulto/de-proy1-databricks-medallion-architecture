@@ -56,7 +56,7 @@ def run_cuadraturas(spark, cfg) -> list[dict]:
 
 def run_quality(spark, cfg) -> dict:
     """Run all expectations + cuadraturas and return a single verdict."""
-    from ..utils.quality import write_report
+    from utils.quality import write_report
 
     silver_results = run_silver(spark, cfg)
     gold_tables = run_gold(spark, cfg)
