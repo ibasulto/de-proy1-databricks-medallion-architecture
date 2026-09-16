@@ -58,7 +58,7 @@ Ver **[docs/runbook.md](docs/runbook.md)** paso a paso. En resumen:
 databricks configure --token                 # workspace URL + PAT
 databricks bundle validate --target dev
 databricks bundle deploy  --target dev
-databricks bundle run     --target dev jb_medallion_dev
+databricks bundle run     --target dev jb_medallion
 ```
 
 CI/CD listo: en cada push a `main` corre lint + tests (CI) y deploy a dev; un

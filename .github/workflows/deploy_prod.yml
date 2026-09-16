@@ -38,4 +38,4 @@ jobs:
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-        run: databricks bundle run --target prod jb_medallion_prod
+        run: databricks bundle run --target prod jb_medallion

@@ -39,8 +39,8 @@ no soporta → usa `data_location=workspace`).
 
 ```bash
 databricks bundle validate --target dev        # compila y valida
-databricks bundle deploy --target dev          # crea el job jb_medallion_dev
-databricks bundle run --target dev jb_medallion_dev   # ejecuta el pipeline completo
+databricks bundle deploy --target dev          # crea el job medallion_dev_retail
+databricks bundle run --target dev jb_medallion   # ejecuta el pipeline completo
 databricks bundle destroy --target dev         # borra
 ```
 

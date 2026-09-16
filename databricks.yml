@@ -37,11 +37,10 @@ artifacts:
   src_zip:
     type: archive
     path: src
-    archive_size_limit: 10
 
 resources:
   jobs:
-    jb_medallion_${var.env}:
+    jb_medallion:
       name: medallion_${var.env}_retail
       description: Retail medallion pipeline (bronze -> silver -> gold + quality gate)
       tags:
