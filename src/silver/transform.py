@@ -252,7 +252,7 @@ def define_silver(spark, cfg) -> list[dict]:
         e.expect_column_values_to_not_be_null("product_key").expect_column_values_to_not_be_null(
             "sku"
         ).expect_column_distinct_values_to_contain_set(
-            "category", {c["category"] for c in _CATEGORIES}
+            "category", set(_CATEGORIES)
         ).expect_row_count_to_be_between(1)
 
     def dq_calendar(e: DataFrameExpectations) -> None:
