@@ -186,11 +186,14 @@ def _with_key(df, key_cols):
 
 def merge_into(spark, df: DataFrame, fq: str, key_cols: list[str]) -> None:
     """SCD1 upsert: update changed rows, insert new ones."""
+    fq = _normalize(fq)
+    if not spark.catalog.tableExists(fq):
+        df.write.mode("overwrite").format("delta").saveAsTable(fq)
+        return
 
     src = "updates"
     df = _with_key(df, key_cols)
     df.createOrReplaceTempView(src)
-    fq = _normalize(fq)
     keys_sql = " AND ".join(f"t.{k} <=> {src}.{k}" for k in key_cols)
     spark.sql(
         f"""
@@ -211,11 +214,12 @@ VIOLATION_FIELDS = {"_ingestion_ts", "_load_id", "_source_file", "_rn"}
 
 
 def _apply_dq(
-    spark, df, fq, table_label, checks: Callable[[DataFrameExpectations], None]
+    spark, df, fq, table_label, checks: Callable[[DataFrameExpectations], None],
+    dq_threshold: float = 0.05,
 ) -> list[dict]:
     work = df.drop(*[c for c in VIOLATION_FIELDS if c in df.columns])
     dq = DataFrameExpectations(
-        work, table=fq, dq_threshold=spark.conf.get("spark.dq.threshold", "0.05")
+        work, table=fq, dq_threshold=dq_threshold
     )
     checks(dq)
     try:
@@ -389,7 +393,9 @@ def run_silver(spark, cfg) -> list[dict]:
         cleaned = spec["clean"](df)
         fq = cfg.name(cfg.silver_schema, spec["silver"])
         merge_into(spark, cleaned, fq, spec["keys"])
-        report = _apply_dq(spark, cleaned, fq, spec["silver"], spec["dq"]).collect()
+        report = _apply_dq(
+            spark, cleaned, fq, spec["silver"], spec["dq"], dq_threshold=cfg.dq_threshold
+        ).collect()
         all_reports.extend(report)
     report_path = f"{cfg.dq_report_root()}/silver"
     write_report(spark, all_reports, report_path, "Silver data quality")
