@@ -67,10 +67,18 @@ tag `v*` despliega a prod. Secrets en GitHub: `DATABRICKS_HOST`,
 
 ## Documentación
 
+- [**Guía de implementación (as-built)**](docs/guia_implementacion.md) — de cero a verde, operación, BI y troubleshooting.
 - [Arquitectura](docs/architecture.md)
 - [Modelo de datos](docs/data_model.md)
 - [Runbook](docs/runbook.md)
 - [Guía de portafolio](docs/portfolio_guide.md)
+
+## Estado (as-built)
+
+Desplegado y verificado en Databricks con **Unity Catalog** (catálogo `workspace`,
+`data_location=volume`, `uc=true`) y compute **serverless**. El pipeline corrió de
+punta a punta en `dev` y `prod` vía CI/CD; `dq_reports/overall` en **PASS** y las 4
+cuadraturas reconciliadas. Release: tag `v1.0.0`.
 
 ## Notas
 

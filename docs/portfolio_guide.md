@@ -19,8 +19,9 @@
 | **Orquestación** | `databricks.yml` (DAB): job con dependencias, targets dev/prod |
 | **CI/CD** | `.github/workflows/{ci,deploy_dev,deploy_prod}.yml` |
 | **Dashboard** | `resources/sql/dashboard_queries.sql` sobre Gold |
-| **Tests** | 23 unit tests (calendario, naming, generador, config, balances) |
-| **Scalabilidad** | Auto Loader (`use_autoloader`) y spec DLT (`pipeline_specs/`) para Premium |
+| **Tests** | 24 unit tests (calendario, naming, generador, config, balances) |
+| **Scalabilidad** | Auto Loader (`use_autoloader`) y spec DLT (`pipeline_specs/`) |
+| **BI** | Databricks SQL + conexión Power BI (`docs/guia_implementacion.md` §7) |
 
 ## Reproducible / honesto
 
@@ -36,7 +37,7 @@
 1. Muestra el repo: estructura + DAB.
 2. Corre `python scripts/generate_data.py --mini` local (rápido) y muestra el
    manifest + un CSV.
-3. Repo → Databricks: `databricks bundle deploy/run jb_medallion_dev`.
+3. Repo → Databricks: `databricks bundle deploy --target dev && databricks bundle run --target dev jb_medallion`.
 4. Abre el job: dependencias setup → bronze → silver → gold → quality.
 5. En `dq_reports/overall/dq_report.md`: PASS en todas las checks.
 6. Dashboard SQL: KPI totales, ventas por store, SSS por periodo, inventory y

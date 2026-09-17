@@ -1,17 +1,24 @@
 # Arquitectura – Medallion retail en Databricks
 
+> Para el detalle as-built (entorno desplegado, operación y BI) ver
+> [guia_implementacion.md](guia_implementacion.md).
+
 Modelo de datos en 3 capas (bronze / silver / gold) con **Unity Catalog**, tablas
 **Delta**, calidad tipo "expectations" y CI/CD con **Databricks Asset Bundles** +
 GitHub Actions. El lenguaje de negocio es **retail chileno/generalista**: POS,
 inventario diario, presupuesto por depto y un calendario comercial **4-4-5**.
 
+Entorno de referencia: catálogo Unity Catalog **`workspace`**, schemas
+`bronze`/`silver`/`gold`, volume schema `retail_volumes` y compute
+**serverless-only**.
+
 ```text
  Datos (git, no produccions)                     Databricks Workspace
  ──────────────────────────────                  ──────────────────────────
  resources/data/raw (Volumes)
-   │  upload_ui / verbatim / dbutils.fs          catalog retail_lakehouse
+   │  upload_ui / verbatim / dbutils.fs          catalog workspace
    ▼                                            ┌──────────────────────────┐
- /Volumes/retail_lakehouse/retail_volumes/       │ raw_landing/ (Volume)    │
+ /Volumes/workspace/retail_volumes/              │ raw_landing/ (Volume)    │
    stores master, products master, calendar       │ pos_line_items/ ...     │
    pos_line_items_YYYYMMDD.csv.gz                 └──────────┬───────────────┘
    sales/daily_store_sku/*, kpi/store_daily/*                 ▼
@@ -45,11 +52,12 @@ inventario diario, presupuesto por depto y un calendario comercial **4-4-5**.
 
 ## Decisiones
 
-- **Community Edition**: sin Cloud (jobs de UC) ni DLT → el pipeline corre con
-  notebooks clásicos + `spark_python_task`/`notebook_task` batch. El spec DLT
-  (`pipeline_specs/dlt_medallion.py`) es el "upgrade path" a Premium.
+- **Serverless-only + Unity Catalog**: el bundle no define job clusters; las
+  tareas corren en compute serverless y los datos viven en Volumes UC
+  (`data_location=volume`, `uc=true`). El spec DLT
+  (`pipeline_specs/dlt_medallion.py`) queda como *upgrade path*.
 - **Autoloader** soportado como opción (`use_autoloader=true`) pero el default
-  es batch para que todo funcione en CE.
+  es batch (portable y sin checkpoints obligatorios).
 - **Calidad** = expectations propias estilo Great Expectations: cada entity
   corre su suite y la evidencia (JSON + Markdown) se persiste en el Volume.
 - **Cuadratura**: los totales de Silver deben replicarse en Gold y el KPI store

@@ -1,7 +1,10 @@
 # Modelo de datos – retail medallion
 
-Catálogo `retail_lakehouse`, esquemas `bronze`, `silver`, `gold` y volumen
-`retail_volumes`. Llaves primarias/modales: `bigint`; dinero: `decimal(18,4)`.
+Catálogo Unity Catalog `workspace`, esquemas `bronze`, `silver`, `gold` y volume
+schema `retail_volumes`. Llaves primarias: `bigint`; dinero: `decimal(18,4)`.
+
+> El detalle de linaje, operación y cuadraturas está en
+> [guia_implementacion.md](guia_implementacion.md).
 
 ## Calendario comercial 4-4-5 (`dim_calendar_445`)
 
